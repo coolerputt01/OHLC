@@ -16,6 +16,7 @@ def ohlc_analysis(dataFrame):
     dataFrame["<CANDLE_EFFICIENCY>"] = dataFrame["<BODY>"] / dataFrame["<RANGE>"].replace(0, num.nan)
     dataFrame["<VOLATILITY>"] = dataFrame["<LOG_RETURNS>"].rolling(40).std()
     dataFrame["<AVERAGE_RANGE>"] = dataFrame["<RANGE>"].rolling(40).mean()
+    dataFrame["<Z_SCORES>"] = (dataFrame["<RETURNS>"] - dataFrame["<RETURNS>"].rolling(40).mean())/dataFrame["<RETURNS>"].rolling(40).std(ddof=1)
 
     print(dataFrame.tail(40))
 
@@ -25,5 +26,6 @@ def ohlc_analysis(dataFrame):
         "<LOG_RETURNS>",
         "<RANGE>",
         "<CANDLE_EFFICIENCY>",
-        "<VOLATILITY>"
+        "<VOLATILITY>",
+        "<Z_SCORES>"
     ]].describe())

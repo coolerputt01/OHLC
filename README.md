@@ -1,2 +1,2 @@
-# OHLC
+#  OHLC Analysis
 Just some quant maths

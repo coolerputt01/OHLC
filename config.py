@@ -1,0 +1,1 @@
+MARKET_DATA_FILE_PATH="assets/market.csv"

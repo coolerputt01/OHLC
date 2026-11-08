@@ -2,7 +2,9 @@ import numpy as num
 import pandas as panda
 
 
-def ohlc_analysis(dataFrame):
+def ohlc_analysis(df):
+    dataFrame = df.copy()
+
     dataFrame["<DATETIME>"] = panda.to_datetime(
         dataFrame["<DATE>"] + " " + dataFrame["<TIME>"],
         format="%Y.%m.%d %H:%M:%S"
@@ -33,9 +35,6 @@ def ohlc_analysis(dataFrame):
                                             "<NORMAL>" 
                                         )
 
-
-    print(dataFrame.tail(40))
-
     print("\nStatistical summary:")
     print(dataFrame[[
         "<RETURNS>",
@@ -43,7 +42,45 @@ def ohlc_analysis(dataFrame):
         "<RANGE>",
         "<CANDLE_EFFICIENCY>",
         "<VOLATILITY>",
-        "<Z_SCORES>",
-        "<VOLATILITY_REGIMES>",
-        "<TRENDING_REGIMES>"
+        "<Z_SCORES>"
     ]].describe())
+
+    print(
+        "Observations above 2: ", (z_scores > 2).sum(),
+        "Observations below -2: ", (z_scores < -2).sum()
+    )
+
+
+    return dataFrame
+
+def next_returns_ohlc(df):
+    dataFrame = df.copy()
+
+    dataFrame["<DATETIME>"] = panda.to_datetime(
+        dataFrame["<DATE>"] + " " + dataFrame["<TIME>"],
+        format="%Y.%m.%d %H:%M:%S"
+    )
+    dataFrame = dataFrame.sort_values("<DATETIME>").reset_index(drop=True)
+
+    dataFrame["<RANGE>"] = dataFrame["<HIGH>"] - dataFrame["<LOW>"]
+    dataFrame["<BODY>"] = (dataFrame["<OPEN>"] - dataFrame["<CLOSE>"]).abs()
+    dataFrame["<CANDLE_EFFICIENCY>"] = dataFrame["<BODY>"] / dataFrame["<RANGE>"].replace(0, num.nan)
+
+    dataFrame["<VARIABLE_Y>"] = (dataFrame["<CLOSE>"].shift(-1) / dataFrame["<CLOSE>"] ) - 1
+    dataFrame["<VARIABLE_Y_VALUE_CAP>"] = (dataFrame["<VARIABLE_Y>"] > 0)
+
+    research_data = dataFrame.dropna(subset=["<CANDLE_EFFICIENCY>","<VARIABLE_Y_VALUE_CAP>"]).copy()
+
+    research_data["<CANDLE_EFFICIENCY_GROUP>"] = panda.qcut(research_data["<CANDLE_EFFICIENCY>"],q=5,labels=False,duplicates="drop")
+
+    print(
+        research_data.groupby("<CANDLE_EFFICIENCY_GROUP>")[
+            "<VARIABLE_Y>"
+        ].agg(["count", "mean", "median", "std"])
+    )
+
+    print(
+        research_data.groupby("<CANDLE_EFFICIENCY_GROUP>")[
+            "<VARIABLE_Y_VALUE_CAP>"
+        ].mean()
+    )
